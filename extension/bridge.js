@@ -1,6 +1,6 @@
 // Injected only into the Gauntletdle origin by the extension manifest.
 // The page never receives arbitrary chrome.runtime capabilities.
-const allowed = new Set(["PING", "OPEN_WORDLE", "GET_WORDLE_CANDIDATE"]);
+const allowed = new Set(["PING", "OPEN_WORDLE", "GET_WORDLE_CANDIDATE", "GET_CAPTURED_RESULT"]);
 window.addEventListener("message", async event => {
   if (event.source !== window || event.origin !== location.origin) return;
   const data = event.data;
@@ -9,7 +9,7 @@ window.addEventListener("message", async event => {
   try {
     if (data.type === "PING") response = { ok: true };
     else if (data.type === "OPEN_WORDLE") response = await chrome.runtime.sendMessage({ type: "OPEN_WORDLE" });
-    else response = await chrome.runtime.sendMessage({ type: "GET_WORDLE_CANDIDATE" });
+    else response = await chrome.runtime.sendMessage({ type: data.type });
   } catch { response = { ok: false, error: "extension_unavailable" }; }
   window.postMessage({ channel: "gauntletdle:extension", requestId: data.requestId, type: data.type, response }, location.origin);
 });
