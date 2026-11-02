@@ -25,6 +25,15 @@
         "wordle.js"
       ],
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://thanoslabs.github.io/gauntletdle/*"
+      ],
+      "js": [
+        "bridge.js"
+      ],
+      "run_at": "document_start"
     }
   ]
 }
