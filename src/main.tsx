@@ -23,6 +23,7 @@ function App() {
   const [confirmNext, setConfirmNext] = useState(false);
   const [extensionStatus, setExtensionStatus] = useState("Not checked");
   const [candidate, setCandidate] = useState(false);
+  const [captured, setCaptured] = useState<{ gameId: string; raw: string; summary: string; capturedAt: number } | null>(null);
   const activeIndex = Math.min(Math.max(0, index), Math.max(0, selected.length - 1));
   const game = games.find(g => g.id === selected[activeIndex]);
   const toggle = (id: string) => {
@@ -60,8 +61,15 @@ function App() {
     setResultError("");
     update(game.id, "complete", parsed?.summary || draft.trim());
   };
+  const refreshCapture = async () => {
+    const response = await requestExtension("GET_CAPTURED_RESULT");
+    const result = response.result;
+    if (response.ok && result && result.gameId === game?.id && new Date(result.capturedAt).toLocaleDateString("en-CA") === today()) {
+      setCaptured(result);
+    } else setCaptured(null);
+  };
   const advance = () => {
-    setConfirmNext(false); setDraft(""); setCandidate(false); setResultError("");
+    setConfirmNext(false); setDraft(""); setCandidate(false); setCaptured(null); setResultError("");
     const next = activeIndex + 1;
     setIndex(next); localStorage.setItem("gauntletdle:index:" + today(), String(next));
   };
@@ -97,6 +105,8 @@ function App() {
     {game ? <section><h2>{activeIndex + 1} / {selected.length} · {game.name}</h2>
       <p>Status: {progress[game.id] || "pending"}</p>
       <button onClick={launch}>Open original game ↗</button>
+      {game.capture.includes("extension") && <button onClick={refreshCapture}>Refresh captured result</button>}
+      {captured && captured.gameId === game.id && <div role="status"><p>Captured {game.name}: {captured.summary}. Review before saving.</p><button onClick={() => { update(game.id, "complete", captured.summary); setCaptured(null); }}>Accept captured result</button><button onClick={() => setCaptured(null)}>Ignore</button></div>}
       {game.id === "wordle" && candidate && <p>Possible Wordle completion detected. Paste the share result to confirm.</p>}
       <p><label htmlFor="result">Paste the game's share result</label></p>
       <textarea id="result" value={draft} onChange={e => { setDraft(e.target.value); setResultError(""); }} placeholder="Paste share text here" />

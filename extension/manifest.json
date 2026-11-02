@@ -22,7 +22,9 @@
         "https://www.nytimes.com/games/wordle/*"
       ],
       "js": [
-        "wordle.js"
+        "shared/wordle-result.js",
+        "wordle.js",
+        "adapters/wordle-copy.js"
       ],
       "run_at": "document_idle"
     },
@@ -34,6 +36,16 @@
         "bridge.js"
       ],
       "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://www.nytimes.com/games/wordle/*"
+      ],
+      "js": [
+        "adapters/wordle-clipboard-main.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
     }
   ]
 }
