@@ -36,6 +36,16 @@
         "bridge.js"
       ],
       "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://www.nytimes.com/games/wordle/*"
+      ],
+      "js": [
+        "adapters/wordle-clipboard-main.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
     }
   ]
 }
