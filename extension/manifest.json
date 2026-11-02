@@ -22,7 +22,9 @@
         "https://www.nytimes.com/games/wordle/*"
       ],
       "js": [
-        "wordle.js"
+        "shared/wordle-result.js",
+        "wordle.js",
+        "adapters/wordle-copy.js"
       ],
       "run_at": "document_idle"
     },
