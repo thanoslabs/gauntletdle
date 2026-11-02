@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { requestExtension } from "./extension";
 import { games, normalizeSelection } from "./games";
+import { parseResult } from "./game-parsers";
 import "./style.css";
 
 type Status = "pending" | "skipped" | "complete";
@@ -18,6 +19,7 @@ function App() {
   const [results, setResults] = useState<Record<string, string>>(() => load(dailyKey() + ":results", {}));
   const [index, setIndex] = useState(() => load("gauntletdle:index:" + today(), 0));
   const [draft, setDraft] = useState("");
+  const [resultError, setResultError] = useState("");
   const [confirmNext, setConfirmNext] = useState(false);
   const [extensionStatus, setExtensionStatus] = useState("Not checked");
   const [candidate, setCandidate] = useState(false);
@@ -45,6 +47,20 @@ function App() {
     }
     setConfirmNext(true);
   };
+  const saveResult = () => {
+    if (!game) return;
+    const parsed = parseResult(game, draft);
+    if (game.parser && !parsed) {
+      setResultError("This does not look like a valid " + game.name + " share result. Paste the copied share text, or use manual completion.");
+      return;
+    }
+    if (!game.parser && !draft.trim()) {
+      setResultError("Paste a result or choose manual completion.");
+      return;
+    }
+    setResultError("");
+    update(game.id, "complete", parsed?.summary || draft.trim());
+  };
   const refreshCapture = async () => {
     const response = await requestExtension("GET_CAPTURED_RESULT");
     const result = response.result;
@@ -53,7 +69,7 @@ function App() {
     } else setCaptured(null);
   };
   const advance = () => {
-    setConfirmNext(false); setDraft(""); setCandidate(false); setCaptured(null);
+    setConfirmNext(false); setDraft(""); setCandidate(false); setCaptured(null); setResultError("");
     const next = activeIndex + 1;
     setIndex(next); localStorage.setItem("gauntletdle:index:" + today(), String(next));
   };
@@ -93,8 +109,10 @@ function App() {
       {captured && captured.gameId === game.id && <div role="status"><p>Captured {game.name}: {captured.summary}. Review before saving.</p><button onClick={() => { update(game.id, "complete", captured.summary); setCaptured(null); }}>Accept captured result</button><button onClick={() => setCaptured(null)}>Ignore</button></div>}
       {game.id === "wordle" && candidate && <p>Possible Wordle completion detected. Paste the share result to confirm.</p>}
       <p><label htmlFor="result">Paste the game's share result</label></p>
-      <textarea id="result" value={draft} onChange={e => setDraft(e.target.value)} placeholder="Paste share text here" />
-      <div className="actions"><button onClick={() => update(game.id, "complete", draft.trim())}>Save result</button><button onClick={() => update(game.id, "skipped")}>Skip</button></div>
+      <textarea id="result" value={draft} onChange={e => { setDraft(e.target.value); setResultError(""); }} placeholder="Paste share text here" />
+      {resultError && <p role="alert">{resultError}</p>}
+      {game.parser && draft.trim() && parseResult(game, draft) && <p>Detected result: {parseResult(game, draft)?.summary}</p>}
+      <div className="actions"><button onClick={saveResult}>Save result</button><button onClick={() => { setResultError(""); update(game.id, "complete", "Completed (no score)"); }}>Manual completion</button><button onClick={() => { setResultError(""); update(game.id, "skipped"); }}>Skip</button></div>
     </section> : <section><h2>No games selected</h2><p>Choose a game to start your gauntlet.</p></section>}
     {confirmNext && <section role="dialog" aria-label="Next Game confirmation"><h2>{activeIndex + 1 < selected.length ? "Ready for the next game?" : "Gauntlet complete"}</h2>
       <button onClick={advance}>{activeIndex + 1 < selected.length ? "Confirm · Next game" : "Finish"}</button>
