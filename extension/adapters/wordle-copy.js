@@ -6,3 +6,11 @@ document.addEventListener("copy", event => {
   if (!parsed) return;
   chrome.runtime.sendMessage({ type: "CAPTURE_SHARE_RESULT", gameId: "wordle", text: parsed.raw }).catch(() => {});
 }, true);
+
+window.addEventListener("message", event => {
+  if (event.source !== window || event.origin !== location.origin) return;
+  if (event.data?.channel !== "gauntletdle:wordle-share") return;
+  const parsed = globalThis.GauntletdleWordle.parse(event.data.text);
+  if (!parsed) return;
+  chrome.runtime.sendMessage({ type: "CAPTURE_SHARE_RESULT", gameId: "wordle", text: parsed.raw }).catch(() => {});
+});
