@@ -1,6 +1,6 @@
-export type ExtensionResponse = { ok: boolean; candidate?: { detectedAt: number; source: string } | null; error?: string };
-const allowed = new Set(["PING", "OPEN_WORDLE", "GET_WORDLE_CANDIDATE"]);
-export function requestExtension(type: "PING" | "OPEN_WORDLE" | "GET_WORDLE_CANDIDATE", timeoutMs = 1500): Promise<ExtensionResponse> {
+export type ExtensionResponse = { ok: boolean; candidate?: { detectedAt: number; source: string } | null; result?: { gameId: string; puzzleId: string; summary: string; raw: string; capturedAt: number } | null; error?: string };
+const allowed = new Set(["PING", "OPEN_WORDLE", "GET_WORDLE_CANDIDATE", "GET_CAPTURED_RESULT"]);
+export function requestExtension(type: "PING" | "OPEN_WORDLE" | "GET_WORDLE_CANDIDATE" | "GET_CAPTURED_RESULT", timeoutMs = 1500): Promise<ExtensionResponse> {
   if (!allowed.has(type)) return Promise.resolve({ ok: false, error: "invalid_command" });
   const requestId = crypto.randomUUID();
   return new Promise(resolve => {
