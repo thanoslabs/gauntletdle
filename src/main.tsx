@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { requestExtension } from "./extension";
 import { games, normalizeSelection } from "./games";
 import { parseResult } from "./game-parsers";
 import { NativeWord } from "./NativeWord";
@@ -24,8 +23,6 @@ function App() {
   const [draft, setDraft] = useState("");
   const [resultError, setResultError] = useState("");
   const [confirmNext, setConfirmNext] = useState(false);
-  const [extensionStatus, setExtensionStatus] = useState("Not checked");
-  const [captured, setCaptured] = useState<{ gameId: string; raw: string; summary: string; capturedAt: number } | null>(null);
   const activeIndex = Math.min(Math.max(0, index), Math.max(0, selected.length - 1));
   const finished = isGauntletFinished(index, selected);
   const game = finished ? undefined : games.find(g => g.id === selected[activeIndex]);
@@ -33,7 +30,7 @@ function App() {
     const updated = selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id];
     setSelected(updated); localStorage.setItem("gauntletdle:games", JSON.stringify(updated));
     setIndex(0); localStorage.setItem("gauntletdle:index:" + today(), "0");
-    setConfirmNext(false); setCaptured(null);
+    setConfirmNext(false);
   };
   const move = (id: string, delta: number) => {
     const position = selected.indexOf(id), destination = position + delta;
@@ -41,7 +38,7 @@ function App() {
     const updated = [...selected]; [updated[position], updated[destination]] = [updated[destination], updated[position]];
     setSelected(updated); localStorage.setItem("gauntletdle:games", JSON.stringify(updated));
     setIndex(0); localStorage.setItem("gauntletdle:index:" + today(), "0");
-    setConfirmNext(false); setCaptured(null);
+    setConfirmNext(false);
   };
   const update = (id: string, status: Status, result?: string) => {
     const updated = { ...progress, [id]: status }; setProgress(updated); localStorage.setItem(dailyKey(), JSON.stringify(updated));
@@ -65,21 +62,10 @@ function App() {
     setResultError("");
     update(game.id, "complete", parsed?.summary || draft.trim());
   };
-  const refreshCapture = async () => {
-    const response = await requestExtension("GET_CAPTURED_RESULT");
-    const result = response.result;
-    if (response.ok && result && result.gameId === game?.id && progress[result.gameId] !== "complete" && progress[result.gameId] !== "skipped" && new Date(result.capturedAt).toLocaleDateString("en-CA") === today()) {
-      setCaptured(result);
-    } else setCaptured(null);
-  };
   const advance = () => {
-    setConfirmNext(false); setDraft(""); setCaptured(null); setResultError("");
+    setConfirmNext(false); setDraft(""); setResultError("");
     const next = nextGauntletIndex(activeIndex, selected);
     setIndex(next); localStorage.setItem("gauntletdle:index:" + today(), String(next));
-  };
-  const checkExtension = async () => {
-    const ping = await requestExtension("PING");
-    setExtensionStatus(ping.ok ? "Connected" : "Not installed or unavailable");
   };
   const launch = () => {
     if (game) window.open(game.url, "_blank", "noopener,noreferrer");
@@ -112,13 +98,10 @@ function App() {
     </>}
     {screen === "play" && <>
       <div className="screen-heading"><h1>Daily gauntlet</h1><button onClick={() => setScreen("welcome")}>← Home</button></div>
-    <section><h2>Chrome companion</h2><p>{extensionStatus}</p><button onClick={checkExtension}>Check extension</button></section>
     {finished && <section role="status"><h2>Gauntlet complete!</h2><p>All selected games have been recorded or skipped. Your results are below.</p></section>}
     {game ? <section><h2>{activeIndex + 1} / {selected.length} · {game.name}</h2>
       <p>Status: {progress[game.id] || "pending"}</p>
       {game.id === "daily-word" ? <NativeWord date={today()} onComplete={summary => update(game.id, "complete", summary)} /> : <button onClick={launch}>Open original game ↗</button>}
-      {game.capture.includes("extension") && <button onClick={refreshCapture}>Refresh captured result</button>}
-      {captured && captured.gameId === game.id && !confirmNext && <div role="status"><p>Captured {game.name}: {captured.summary}. Review before saving.</p><button onClick={() => { update(game.id, "complete", captured.summary); setCaptured(null); }}>Accept captured result</button><button onClick={() => setCaptured(null)}>Ignore</button></div>}
       {game.id !== "daily-word" && <><p><label htmlFor="result">Paste the game's share result</label></p>
       <textarea id="result" value={draft} onChange={e => { setDraft(e.target.value); setResultError(""); }} placeholder="Paste share text here" />
       {resultError && <p role="alert">{resultError}</p>}
