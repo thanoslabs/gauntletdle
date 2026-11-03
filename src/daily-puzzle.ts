@@ -1,8 +1,8 @@
-export type WordPuzzle = { schemaVersion: 1; gameId: "wordle"; date: string; puzzleId: string; source: "original" | "licensed"; puzzle: { answer: string; maxGuesses: 6 } };
+export type WordPuzzle = { schemaVersion: 1; gameId: "wordle"; date: string; puzzleId: string; source: "original" | "licensed" | "external"; puzzle: { answer: string; maxGuesses: 6 } };
 export function validateWordPuzzle(data: unknown, date: string): WordPuzzle | null {
   if (!data || typeof data !== "object") return null;
   const value = data as Partial<WordPuzzle>;
-  if (value.schemaVersion !== 1 || value.gameId !== "wordle" || value.date !== date || typeof value.puzzleId !== "string" || !/^[a-z0-9-]+$/.test(value.puzzleId) || !["original", "licensed"].includes(value.source || "")) return null;
+  if (value.schemaVersion !== 1 || value.gameId !== "wordle" || value.date !== date || typeof value.puzzleId !== "string" || !/^[a-z0-9-]+$/.test(value.puzzleId) || !["original", "licensed", "external"].includes(value.source || "")) return null;
   if (!value.puzzle || !/^[A-Z]{5}$/.test(value.puzzle.answer || "") || value.puzzle.maxGuesses !== 6) return null;
   return value as WordPuzzle;
 }
