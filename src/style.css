@@ -1,1 +1,11 @@
 :root{font-family:system-ui,sans-serif;color:#e9e9f1;background:#111322}body{margin:0}main{max-width:720px;margin:0 auto;padding:24px}header{margin-bottom:32px}section{background:#1b1e30;border:1px solid #373c54;border-radius:14px;padding:22px;margin:18px 0}a{color:#b9a8ff}textarea{box-sizing:border-box;width:100%;min-height:90px;background:#101323;color:white;border:1px solid #535a73;border-radius:8px;padding:12px}button{padding:11px 16px;background:#8b70d6;border:0;border-radius:8px;color:white;cursor:pointer}button:hover{filter:brightness(1.12)}.actions{display:flex;gap:10px;margin-top:12px}pre{white-space:pre-wrap;overflow-wrap:anywhere}
+
+.native-word { margin: 1rem 0; }
+.word-grid { display: grid; gap: 0.3rem; margin: 1rem 0; }
+.word-row { display: flex; gap: 0.3rem; }
+.word-tile { display: grid; place-items: center; width: min(14vw, 3rem); height: min(14vw, 3rem); border: 2px solid #777; font-weight: 700; border-radius: 0.2rem; }
+.word-tile.correct { background: #43814b; color: white; border-color: #43814b; }
+.word-tile.present { background: #aa861f; color: white; border-color: #aa861f; }
+.word-tile.absent { background: #555; color: white; border-color: #555; }
+.native-word form { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem; }
+.native-word input { max-width: 8rem; text-transform: uppercase; }
