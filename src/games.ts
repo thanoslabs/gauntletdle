@@ -1,7 +1,7 @@
 import type { GameDefinition } from "./game-contract";
 export const games: GameDefinition[] = [
-  { id: "daily-word", name: "Daily Word (original)", url: "https://thanoslabs.github.io/gauntletdle/", capture: ["manual"] },
   { id: "wordle", name: "Wordle", url: "https://www.nytimes.com/games/wordle/index.html", capture: ["manual", "share", "extension"], parser: "wordle", adapter: "wordle" },
+  { id: "daily-word", name: "Daily Word (original)", url: "https://thanoslabs.github.io/gauntletdle/", capture: ["manual"] },
   { id: "murdle", name: "Murdle", url: "https://murdle.com/", capture: ["manual"] },
   { id: "krillion", name: "Krillion", url: "https://krillion.io/", capture: ["manual"] },
 ];
