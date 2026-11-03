@@ -61,3 +61,9 @@ jobs:
           git add "$path"
           git commit -m "data: import daily word puzzle $date"
           git push origin HEAD:main
+      - name: Deploy updated daily puzzle
+        if: steps.clock.outputs.run == 'true'
+        env:
+          GH_TOKEN: \${{ github.token }}
+        run: |
+          gh workflow run docs.yaml --ref main
