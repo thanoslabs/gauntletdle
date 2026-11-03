@@ -13,7 +13,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 concurrency:
   group: daily-word-import
@@ -44,10 +43,10 @@ jobs:
           TODAY: ${{ steps.clock.outputs.date }}
         run: |
           python3 scripts/import_daily_word.py --date "${REQUESTED_DATE:-$TODAY}"
-      - name: Open publishing PR
+      - name: Commit puzzle to main
+        id: publish
         if: steps.clock.outputs.run == 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
           REQUESTED_DATE: ${{ inputs.date }}
           TODAY: ${{ steps.clock.outputs.date }}
         run: |
@@ -58,11 +57,15 @@ jobs:
             echo "Puzzle already committed; nothing to publish"
             exit 0
           fi
-          branch="automation/daily-word-$date"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -b "$branch"
           git add "$path"
           git commit -m "data: import daily word puzzle $date"
-          git push origin "$branch"
-          gh pr create --base main --head "$branch" --title "data: Daily Word $date" --body "Automated daily puzzle import from the NYT Wordle-compatible JSON endpoint. Review source and redistribution permissions before merging."
+          git push origin HEAD:main
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+      - name: Deploy updated daily puzzle
+        if: steps.publish.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run docs.yaml --ref main
