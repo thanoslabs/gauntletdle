@@ -1,8 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { loadWordPuzzle } from "./daily-puzzle";
 import { answerForDate, scoreGuess } from "./native-word";
 const emoji = { correct: "🟩", present: "🟨", absent: "⬛" };
 export function NativeWord({ date, onComplete }: { date: string; onComplete: (summary: string) => void }) {
-  const answer = answerForDate(date);
+  const [fileAnswer, setFileAnswer] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    loadWordPuzzle(date).then(puzzle => { if (active) { setFileAnswer(puzzle?.puzzle.answer || null); setLoading(false); } });
+    return () => { active = false; };
+  }, [date]);
+  const answer = fileAnswer || answerForDate(date);
   const key = "gauntletdle:native-word:" + date;
   const [guesses, setGuesses] = useState<string[]>(() => {
     try { const data = JSON.parse(localStorage.getItem(key) || "[]"); return Array.isArray(data) ? data.filter((g: unknown) => typeof g === "string" && /^[A-Z]{5}$/.test(g)).slice(0, 6) : []; }
@@ -15,7 +24,7 @@ export function NativeWord({ date, onComplete }: { date: string; onComplete: (su
   const submit = () => {
     const guess = input.toUpperCase().trim();
     if (!/^[A-Z]{5}$/.test(guess)) { setError("Enter a five-letter word."); return; }
-    if (finished) return;
+    if (finished || loading) return;
     const next = [...guesses, guess];
     setGuesses(next); localStorage.setItem(key, JSON.stringify(next)); setInput(""); setError("");
     if (guess === answer || next.length === 6) onComplete(guess === answer ? String(next.length) + "/6" : "X/6");
@@ -31,10 +40,11 @@ export function NativeWord({ date, onComplete }: { date: string; onComplete: (su
         })}
       </div>)}
     </div>
+    {loading && <p role="status">Loading daily puzzle…</p>}
     {finished ? <p role="status">{won ? "Solved!" : "No guesses left."} Result: {won ? guesses.indexOf(answer) + 1 : "X"}/6</p> : <form onSubmit={event => { event.preventDefault(); submit(); }}>
       <label htmlFor="native-guess">Your guess</label>
       <input id="native-guess" autoComplete="off" autoCapitalize="characters" maxLength={5} value={input} onChange={event => setInput(event.target.value.replace(/[^a-z]/gi, "").slice(0, 5))} />
-      <button type="submit">Guess</button>
+      <button type="submit" disabled={loading}>Guess</button>
     </form>}
     {error && <p role="alert">{error}</p>}
     <p aria-label="Legend">🟩 Correct position · 🟨 Wrong position · ⬛ Not in word</p>

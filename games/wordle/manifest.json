@@ -1,0 +1,6 @@
+{
+  "id": "wordle",
+  "schemaVersion": 1,
+  "source": "original",
+  "dailyPath": "daily/{date}.json"
+}

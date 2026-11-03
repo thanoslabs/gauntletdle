@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "gameId": "wordle",
+  "date": "2026-11-02",
+  "puzzleId": "wordle-demo-2026-11-02",
+  "source": "original",
+  "puzzle": { "answer": "CRANE", "maxGuesses": 6 }
+}
