@@ -4,6 +4,7 @@ import { requestExtension } from "./extension";
 import { games, normalizeSelection } from "./games";
 import { parseResult } from "./game-parsers";
 import { NativeWord } from "./NativeWord";
+import { isGauntletFinished, nextGauntletIndex } from "./gauntlet-state";
 import "./style.css";
 
 type Status = "pending" | "skipped" | "complete";
@@ -26,12 +27,13 @@ function App() {
   const [candidate, setCandidate] = useState(false);
   const [captured, setCaptured] = useState<{ gameId: string; raw: string; summary: string; capturedAt: number } | null>(null);
   const activeIndex = Math.min(Math.max(0, index), Math.max(0, selected.length - 1));
-  const game = games.find(g => g.id === selected[activeIndex]);
+  const finished = isGauntletFinished(index, selected);
+  const game = finished ? undefined : games.find(g => g.id === selected[activeIndex]);
   const toggle = (id: string) => {
     const updated = selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id];
     setSelected(updated); localStorage.setItem("gauntletdle:games", JSON.stringify(updated));
     setIndex(0); localStorage.setItem("gauntletdle:index:" + today(), "0");
-    setConfirmNext(false);
+    setConfirmNext(false); setCaptured(null);
   };
   const move = (id: string, delta: number) => {
     const position = selected.indexOf(id), destination = position + delta;
@@ -39,6 +41,7 @@ function App() {
     const updated = [...selected]; [updated[position], updated[destination]] = [updated[destination], updated[position]];
     setSelected(updated); localStorage.setItem("gauntletdle:games", JSON.stringify(updated));
     setIndex(0); localStorage.setItem("gauntletdle:index:" + today(), "0");
+    setConfirmNext(false); setCaptured(null);
   };
   const update = (id: string, status: Status, result?: string) => {
     const updated = { ...progress, [id]: status }; setProgress(updated); localStorage.setItem(dailyKey(), JSON.stringify(updated));
@@ -65,13 +68,13 @@ function App() {
   const refreshCapture = async () => {
     const response = await requestExtension("GET_CAPTURED_RESULT");
     const result = response.result;
-    if (response.ok && result && result.gameId === game?.id && new Date(result.capturedAt).toLocaleDateString("en-CA") === today()) {
+    if (response.ok && result && result.gameId === game?.id && progress[result.gameId] !== "complete" && progress[result.gameId] !== "skipped" && new Date(result.capturedAt).toLocaleDateString("en-CA") === today()) {
       setCaptured(result);
     } else setCaptured(null);
   };
   const advance = () => {
     setConfirmNext(false); setDraft(""); setCandidate(false); setCaptured(null); setResultError("");
-    const next = activeIndex + 1;
+    const next = nextGauntletIndex(activeIndex, selected);
     setIndex(next); localStorage.setItem("gauntletdle:index:" + today(), String(next));
   };
   const checkExtension = async () => {
@@ -103,19 +106,20 @@ function App() {
       </div>)}
     </section>
     <section><h2>Chrome companion</h2><p>{extensionStatus}</p><button onClick={checkExtension}>Check extension</button></section>
+    {finished && <section role="status"><h2>Gauntlet complete!</h2><p>All selected games have been recorded or skipped. Your results are below.</p></section>}
     {game ? <section><h2>{activeIndex + 1} / {selected.length} · {game.name}</h2>
       <p>Status: {progress[game.id] || "pending"}</p>
       {game.id === "daily-word" ? <NativeWord date={today()} onComplete={summary => update(game.id, "complete", summary)} /> : <button onClick={launch}>Open original game ↗</button>}
       {game.capture.includes("extension") && <button onClick={refreshCapture}>Refresh captured result</button>}
-      {captured && captured.gameId === game.id && <div role="status"><p>Captured {game.name}: {captured.summary}. Review before saving.</p><button onClick={() => { update(game.id, "complete", captured.summary); setCaptured(null); }}>Accept captured result</button><button onClick={() => setCaptured(null)}>Ignore</button></div>}
+      {captured && captured.gameId === game.id && !confirmNext && <div role="status"><p>Captured {game.name}: {captured.summary}. Review before saving.</p><button onClick={() => { update(game.id, "complete", captured.summary); setCaptured(null); }}>Accept captured result</button><button onClick={() => setCaptured(null)}>Ignore</button></div>}
       {game.id === "wordle" && candidate && <p>Possible Wordle completion detected. Paste the share result to confirm.</p>}
       {game.id !== "daily-word" && <><p><label htmlFor="result">Paste the game's share result</label></p>
       <textarea id="result" value={draft} onChange={e => { setDraft(e.target.value); setResultError(""); }} placeholder="Paste share text here" />
       {resultError && <p role="alert">{resultError}</p>}
       {game.parser && draft.trim() && parseResult(game, draft) && <p>Detected result: {parseResult(game, draft)?.summary}</p>}
-      <div className="actions"><button onClick={saveResult}>Save result</button><button onClick={() => { setResultError(""); update(game.id, "complete", "Completed (no score)"); }}>Manual completion</button></div></>}
-      <button onClick={() => { setResultError(""); update(game.id, "skipped"); }}>Skip</button>
-    </section> : <section><h2>No games selected</h2><p>Choose a game to start your gauntlet.</p></section>}
+      <div className="actions"><button disabled={confirmNext} onClick={saveResult}>Save result</button><button disabled={confirmNext} onClick={() => { setResultError(""); update(game.id, "complete", "Completed (no score)"); }}>Manual completion</button></div></>}
+      <button disabled={confirmNext} onClick={() => { setResultError(""); update(game.id, "skipped"); }}>Skip</button>
+    </section> : !finished && <section><h2>No games selected</h2><p>Choose a game to start your gauntlet.</p></section>}
     {confirmNext && <section role="dialog" aria-label="Next Game confirmation"><h2>{activeIndex + 1 < selected.length ? "Ready for the next game?" : "Gauntlet complete"}</h2>
       <button onClick={advance}>{activeIndex + 1 < selected.length ? "Confirm · Next game" : "Finish"}</button>
     </section>}
