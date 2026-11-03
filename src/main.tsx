@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { requestExtension } from "./extension";
 import { games, normalizeSelection } from "./games";
 import { parseResult } from "./game-parsers";
+import { isGauntletFinished, nextGauntletIndex } from "./gauntlet-state";
 import "./style.css";
 
 type Status = "pending" | "skipped" | "complete";
@@ -25,7 +26,7 @@ function App() {
   const [candidate, setCandidate] = useState(false);
   const [captured, setCaptured] = useState<{ gameId: string; raw: string; summary: string; capturedAt: number } | null>(null);
   const activeIndex = Math.min(Math.max(0, index), Math.max(0, selected.length - 1));
-  const finished = selected.length > 0 && index >= selected.length;
+  const finished = isGauntletFinished(index, selected);
   const game = finished ? undefined : games.find(g => g.id === selected[activeIndex]);
   const toggle = (id: string) => {
     const updated = selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id];
@@ -72,7 +73,7 @@ function App() {
   };
   const advance = () => {
     setConfirmNext(false); setDraft(""); setCandidate(false); setCaptured(null); setResultError("");
-    const next = activeIndex + 1;
+    const next = nextGauntletIndex(activeIndex, selected);
     setIndex(next); localStorage.setItem("gauntletdle:index:" + today(), String(next));
   };
   const checkExtension = async () => {
