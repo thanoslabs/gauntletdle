@@ -16,7 +16,7 @@ function load<T>(key: string, fallback: T): T {
   catch { return fallback; }
 }
 function App() {
-  const [selected, setSelected] = useState<string[]>(() => normalizeSelection(load("gauntletdle:games", ["daily-word"]))));
+  const [selected, setSelected] = useState<string[]>(() => normalizeSelection(load("gauntletdle:games", ["daily-word"])));
   const [progress, setProgress] = useState<Progress>(() => load(dailyKey(), {}));
   const [results, setResults] = useState<Record<string, string>>(() => load(dailyKey() + ":results", {}));
   const [index, setIndex] = useState(() => load("gauntletdle:index:" + today(), 0));
@@ -130,6 +130,7 @@ function App() {
       <button onClick={advance}>{activeIndex + 1 < selected.length ? "Confirm · Next game" : "Finish"}</button>
     </section>}
     <section><h2>Combined results</h2><pre>{share()}</pre><button onClick={() => navigator.clipboard.writeText(share())}>Copy results</button></section>
+    </>}
   </main>;
 }
 createRoot(document.getElementById("root")!).render(<React.StrictMode><App /></React.StrictMode>);
