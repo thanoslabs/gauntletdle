@@ -1,33 +1,89 @@
-name: Docs
+name: Pages
 
-# Builds the markdown site in docs/ with nebula-md (https://github.com/thanoslabs/nebula-md)
-# and deploys it to GitHub Pages. Pages deploys only run for public repositories.
 on:
   push:
     branches: [main]
     paths:
+      - "src/**"
+      - "public/**"
+      - "games/**"
       - "docs/**"
+      - "index.html"
+      - "package.json"
+      - "vite.config.ts"
+      - "tsconfig.json"
       - ".github/workflows/docs.yaml"
   workflow_dispatch:
 
-# Only one Pages deployment at a time; let an in-flight deploy finish.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  docs:
-    # Private repos skip publishing (GitHub Pages on private repos needs a paid plan
-    # and would expose internal docs publicly on free plans).
+  deploy:
     if: ${{ !github.event.repository.private }}
-    # TODO(project): pin to a commit SHA or tag once nebula-md publishes releases.
-    uses: thanoslabs/nebula-md/.github/workflows/deploy.yml@main
-    permissions:
-      contents: write
-      pages: write
-      id-token: write
-    with:
-      vault_repo: ${{ github.repository }}
-      vault_directory: docs/
-      output_directory: output/
-      site_name: ${{ github.event.repository.name }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout Gauntletdle
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Test
+        run: npm test
+      - name: Build game
+        run: npm run build
+      - name: Checkout Nebula MD
+        uses: actions/checkout@v4
+        with:
+          repository: thanoslabs/nebula-md
+          path: .nebula
+          sparse-checkout: |
+            src/
+            .env.example
+          sparse-checkout-cone-mode: false
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: .nebula/src/go.mod
+          cache: false
+      - name: Build docs renderer
+        run: |
+          cd .nebula/src
+          CGO_ENABLED=0 go build -buildvcs=false -o nebula .
+      - name: Render documentation
+        run: |
+          mkdir -p .nebula/vault
+          cp -R docs/. .nebula/vault/
+          cd .nebula
+          ./src/nebula
+        env:
+          NEBULA_SITE_NAME: Gauntletdle Docs
+          NEBULA_INPUT: vault
+          NEBULA_OUTPUT: output
+          NEBULA_CLEAN_URLS: "true"
+      - name: Assemble Pages site
+        run: |
+          mkdir -p dist/docs
+          cp -R .nebula/output/. dist/docs/
+          touch dist/.nojekyll
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
