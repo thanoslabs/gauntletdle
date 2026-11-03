@@ -8,7 +8,7 @@ export type KrillionPuzzle = {
   rounds: KrillionRound[];
 };
 export function normalizeAnswer(text: string): string {
-  return text.normalize("NFKC").toLocaleLowerCase("en").replace(/[^\\p{L}\\p{N}]+/gu, " ").trim().replace(/\\s+/g, " ");
+  return text.normalize("NFKC").toLocaleLowerCase("en").replace(/[^\p{L}\p{N}]+/gu, " ").trim().replace(/\s+/g, " ");
 }
 export function validateKrillionPuzzle(input: unknown, date: string): KrillionPuzzle | null {
   if (!input || typeof input !== "object") return null;
@@ -39,7 +39,7 @@ export function scoreKrillionAnswer(round: KrillionRound, guess: string): number
   return round.answers.find(a => [a.text, ...(a.aliases || [])].some(v => normalizeAnswer(v) === normalized))?.points || 0;
 }
 export async function loadKrillionPuzzle(date: string): Promise<KrillionPuzzle | null> {
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
   try {
     const response = await fetch(import.meta.env.BASE_URL + "games/krillion/playable/" + date + ".json");
     return response.ok ? validateKrillionPuzzle(await response.json(), date) : null;
