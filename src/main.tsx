@@ -16,15 +16,15 @@ function load<T>(key: string, fallback: T): T {
   catch { return fallback; }
 }
 function App() {
-  const [selected, setSelected] = useState<string[]>(() => normalizeSelection(load("gauntletdle:games", ["wordle"])));
+  const [selected, setSelected] = useState<string[]>(() => normalizeSelection(load("gauntletdle:games", ["daily-word"]))));
   const [progress, setProgress] = useState<Progress>(() => load(dailyKey(), {}));
   const [results, setResults] = useState<Record<string, string>>(() => load(dailyKey() + ":results", {}));
   const [index, setIndex] = useState(() => load("gauntletdle:index:" + today(), 0));
+  const [screen, setScreen] = useState<"welcome" | "configure" | "play">("welcome");
   const [draft, setDraft] = useState("");
   const [resultError, setResultError] = useState("");
   const [confirmNext, setConfirmNext] = useState(false);
   const [extensionStatus, setExtensionStatus] = useState("Not checked");
-  const [candidate, setCandidate] = useState(false);
   const [captured, setCaptured] = useState<{ gameId: string; raw: string; summary: string; capturedAt: number } | null>(null);
   const activeIndex = Math.min(Math.max(0, index), Math.max(0, selected.length - 1));
   const finished = isGauntletFinished(index, selected);
@@ -73,38 +73,45 @@ function App() {
     } else setCaptured(null);
   };
   const advance = () => {
-    setConfirmNext(false); setDraft(""); setCandidate(false); setCaptured(null); setResultError("");
+    setConfirmNext(false); setDraft(""); setCaptured(null); setResultError("");
     const next = nextGauntletIndex(activeIndex, selected);
     setIndex(next); localStorage.setItem("gauntletdle:index:" + today(), String(next));
   };
   const checkExtension = async () => {
     const ping = await requestExtension("PING");
     setExtensionStatus(ping.ok ? "Connected" : "Not installed or unavailable");
-    if (ping.ok) {
-      const status = await requestExtension("GET_WORDLE_CANDIDATE");
-      setCandidate(Boolean(status.ok && status.candidate && Date.now() - status.candidate.detectedAt < 86400000));
-    }
   };
-  const launch = async () => {
-    if (!game) return;
-    if (game.id === "wordle") {
-      const result = await requestExtension("OPEN_WORDLE");
-      if (result.ok) return;
-    }
-    window.open(game.url, "_blank", "noopener,noreferrer");
+  const launch = () => {
+    if (game) window.open(game.url, "_blank", "noopener,noreferrer");
   };
   const share = () => "⚔️ Gauntletdle " + today() + "\n" + selected.map(id => {
     const item = games.find(g => g.id === id)!;
     return item.name + ": " + (progress[id] === "complete" ? results[id] || "Completed (no score)" : "N/A");
   }).join("\n");
   return <main>
-    <header><h1>⚔️ Gauntletdle</h1><p>Your daily puzzle gauntlet · {today()}</p></header>
-    <section><h2>Configure games</h2><p>Select games and arrange their order.</p>
+    <header className="app-header"><button className="brand-button" onClick={() => setScreen("welcome")}>⚔️ Gauntletdle</button><span>{today()}</span></header>
+    {screen === "welcome" && <section className="welcome-screen">
+      <div className="welcome-symbol" aria-hidden="true">⚔️</div>
+      <h1>Your daily puzzle gauntlet.</h1>
+      <p>One challenge at a time. Your favorite daily games, together.</p>
+      <div className="welcome-actions">
+        <button className="primary-cta" onClick={() => setScreen("play")}>Start playing →</button>
+        <button className="secondary-cta" onClick={() => setScreen("configure")}>Configure games</button>
+      </div>
+      <p className="welcome-count">{selected.length} {selected.length === 1 ? "game" : "games"} in your gauntlet</p>
+    </section>}
+    {screen === "configure" && <>
+      <div className="screen-heading"><h1>Choose your games</h1><button onClick={() => setScreen("welcome")}>← Back</button></div>
+    <section><h2>Your gauntlet</h2><p>Select games and arrange their order.</p>
       {games.map(item => <div key={item.id} className="actions">
         <label><input type="checkbox" checked={selected.includes(item.id)} onChange={() => toggle(item.id)} /> {item.name}</label>
         {selected.includes(item.id) && <><button aria-label={"Move " + item.name + " up"} onClick={() => move(item.id, -1)}>↑</button><button aria-label={"Move " + item.name + " down"} onClick={() => move(item.id, 1)}>↓</button></>}
       </div>)}
     </section>
+      <div className="actions"><button onClick={() => setScreen("play")} disabled={!selected.length}>Start playing →</button><button onClick={() => setScreen("welcome")}>Done</button></div>
+    </>}
+    {screen === "play" && <>
+      <div className="screen-heading"><h1>Daily gauntlet</h1><button onClick={() => setScreen("welcome")}>← Home</button></div>
     <section><h2>Chrome companion</h2><p>{extensionStatus}</p><button onClick={checkExtension}>Check extension</button></section>
     {finished && <section role="status"><h2>Gauntlet complete!</h2><p>All selected games have been recorded or skipped. Your results are below.</p></section>}
     {game ? <section><h2>{activeIndex + 1} / {selected.length} · {game.name}</h2>
@@ -112,7 +119,6 @@ function App() {
       {game.id === "daily-word" ? <NativeWord date={today()} onComplete={summary => update(game.id, "complete", summary)} /> : <button onClick={launch}>Open original game ↗</button>}
       {game.capture.includes("extension") && <button onClick={refreshCapture}>Refresh captured result</button>}
       {captured && captured.gameId === game.id && !confirmNext && <div role="status"><p>Captured {game.name}: {captured.summary}. Review before saving.</p><button onClick={() => { update(game.id, "complete", captured.summary); setCaptured(null); }}>Accept captured result</button><button onClick={() => setCaptured(null)}>Ignore</button></div>}
-      {game.id === "wordle" && candidate && <p>Possible Wordle completion detected. Paste the share result to confirm.</p>}
       {game.id !== "daily-word" && <><p><label htmlFor="result">Paste the game's share result</label></p>
       <textarea id="result" value={draft} onChange={e => { setDraft(e.target.value); setResultError(""); }} placeholder="Paste share text here" />
       {resultError && <p role="alert">{resultError}</p>}
