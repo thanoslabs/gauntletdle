@@ -44,6 +44,12 @@ jobs:
         run: npm test
       - name: Build game
         run: npm run build
+      - name: Stage daily puzzle assets
+        run: |
+          if [ -d games ]; then
+            mkdir -p dist/games
+            cp -R games/. dist/games/
+          fi
       - name: Checkout Nebula MD
         uses: actions/checkout@v4
         with:
