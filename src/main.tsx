@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { requestExtension } from "./extension";
 import { games, normalizeSelection } from "./games";
 import { parseResult } from "./game-parsers";
+import { NativeWord } from "./NativeWord";
 import { isGauntletFinished, nextGauntletIndex } from "./gauntlet-state";
 import "./style.css";
 
@@ -108,15 +109,16 @@ function App() {
     {finished && <section role="status"><h2>Gauntlet complete!</h2><p>All selected games have been recorded or skipped. Your results are below.</p></section>}
     {game ? <section><h2>{activeIndex + 1} / {selected.length} · {game.name}</h2>
       <p>Status: {progress[game.id] || "pending"}</p>
-      <button onClick={launch}>Open original game ↗</button>
+      {game.id === "daily-word" ? <NativeWord date={today()} onComplete={summary => update(game.id, "complete", summary)} /> : <button onClick={launch}>Open original game ↗</button>}
       {game.capture.includes("extension") && <button onClick={refreshCapture}>Refresh captured result</button>}
       {captured && captured.gameId === game.id && !confirmNext && <div role="status"><p>Captured {game.name}: {captured.summary}. Review before saving.</p><button onClick={() => { update(game.id, "complete", captured.summary); setCaptured(null); }}>Accept captured result</button><button onClick={() => setCaptured(null)}>Ignore</button></div>}
       {game.id === "wordle" && candidate && <p>Possible Wordle completion detected. Paste the share result to confirm.</p>}
-      <p><label htmlFor="result">Paste the game's share result</label></p>
+      {game.id !== "daily-word" && <><p><label htmlFor="result">Paste the game's share result</label></p>
       <textarea id="result" value={draft} onChange={e => { setDraft(e.target.value); setResultError(""); }} placeholder="Paste share text here" />
       {resultError && <p role="alert">{resultError}</p>}
       {game.parser && draft.trim() && parseResult(game, draft) && <p>Detected result: {parseResult(game, draft)?.summary}</p>}
-      <div className="actions"><button disabled={confirmNext} onClick={saveResult}>Save result</button><button disabled={confirmNext} onClick={() => { setResultError(""); update(game.id, "complete", "Completed (no score)"); }}>Manual completion</button><button disabled={confirmNext} onClick={() => { setResultError(""); update(game.id, "skipped"); }}>Skip</button></div>
+      <div className="actions"><button disabled={confirmNext} onClick={saveResult}>Save result</button><button disabled={confirmNext} onClick={() => { setResultError(""); update(game.id, "complete", "Completed (no score)"); }}>Manual completion</button></div></>}
+      <button disabled={confirmNext} onClick={() => { setResultError(""); update(game.id, "skipped"); }}>Skip</button>
     </section> : !finished && <section><h2>No games selected</h2><p>Choose a game to start your gauntlet.</p></section>}
     {confirmNext && <section role="dialog" aria-label="Next Game confirmation"><h2>{activeIndex + 1 < selected.length ? "Ready for the next game?" : "Gauntlet complete"}</h2>
       <button onClick={advance}>{activeIndex + 1 < selected.length ? "Confirm · Next game" : "Finish"}</button>

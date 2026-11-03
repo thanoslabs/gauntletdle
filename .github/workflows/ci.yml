@@ -27,6 +27,20 @@ jobs:
             python3 -c "import yaml, sys; yaml.safe_load(open('$f'))" 2>/dev/null || echo "Invalid YAML: $f"
           done
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build website
+        run: npm run build
+
       # Add project-specific validation steps below, e.g.:
       # - name: Run tests
       #   run: go test ./...
