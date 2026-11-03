@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { games, normalizeSelection } from "./games";
 import { parseResult } from "./game-parsers";
 import { NativeWord } from "./NativeWord";
+import { NativeKrillion } from "./NativeKrillion";
 import { isGauntletFinished, nextGauntletIndex } from "./gauntlet-state";
 import "./style.css";
 
@@ -101,7 +102,7 @@ function App() {
     {finished && <section role="status"><h2>Gauntlet complete!</h2><p>All selected games have been recorded or skipped. Your results are below.</p></section>}
     {game ? <section><h2>{activeIndex + 1} / {selected.length} · {game.name}</h2>
       <p>Status: {progress[game.id] || "pending"}</p>
-      {game.id === "daily-word" ? <NativeWord date={today()} onComplete={summary => update(game.id, "complete", summary)} /> : <button onClick={launch}>Open original game ↗</button>}
+      {game.id === "daily-word" ? <NativeWord date={today()} onComplete={summary => update(game.id, "complete", summary)} /> : game.id === "krillion" ? <NativeKrillion date={today()} onComplete={summary => update(game.id, "complete", summary)} /> : <button onClick={launch}>Open original game ↗</button>}
       {game.id !== "daily-word" && <><p><label htmlFor="result">Paste the game's share result</label></p>
       <textarea id="result" value={draft} onChange={e => { setDraft(e.target.value); setResultError(""); }} placeholder="Paste share text here" />
       {resultError && <p role="alert">{resultError}</p>}
