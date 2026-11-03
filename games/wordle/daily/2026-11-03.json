@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "gameId": "wordle",
+  "date": "2026-11-03",
+  "puzzleId": "nyt-wordle-1963",
+  "source": "external",
+  "puzzle": {
+    "answer": "POUCH",
+    "maxGuesses": 6
+  }
+}
