@@ -1,0 +1,68 @@
+name: Import Daily Word
+
+on:
+  schedule:
+    # 00:01 America/New_York: UTC 04:01 in daylight time, 05:01 in standard time.
+    - cron: "1 4,5 * * *"
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Puzzle date (YYYY-MM-DD); blank uses today's Eastern date"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: daily-word-import
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check local time
+        id: clock
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          echo "date=$(TZ=America/New_York date +%F)" >> "$GITHUB_OUTPUT"
+          if [[ "$EVENT_NAME" == "workflow_dispatch" || "$(TZ=America/New_York date +%H)" == "00" ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Checkout
+        if: steps.clock.outputs.run == 'true'
+        uses: actions/checkout@v4
+      - name: Import puzzle
+        if: steps.clock.outputs.run == 'true'
+        env:
+          REQUESTED_DATE: ${{ inputs.date }}
+          TODAY: ${{ steps.clock.outputs.date }}
+        run: |
+          python3 scripts/import_daily_word.py --date "${REQUESTED_DATE:-$TODAY}"
+      - name: Open publishing PR
+        if: steps.clock.outputs.run == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_DATE: ${{ inputs.date }}
+          TODAY: ${{ steps.clock.outputs.date }}
+        run: |
+          set -euo pipefail
+          date="${REQUESTED_DATE:-$TODAY}"
+          path="games/wordle/daily/$date.json"
+          if git ls-files --error-unmatch "$path" >/dev/null 2>&1; then
+            echo "Puzzle already committed; nothing to publish"
+            exit 0
+          fi
+          branch="automation/daily-word-$date"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add "$path"
+          git commit -m "data: import daily word puzzle $date"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" --title "data: Daily Word $date" --body "Automated daily puzzle import from the NYT Wordle-compatible JSON endpoint. Review source and redistribution permissions before merging."
