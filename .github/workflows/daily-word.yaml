@@ -44,6 +44,7 @@ jobs:
         run: |
           python3 scripts/import_daily_word.py --date "${REQUESTED_DATE:-$TODAY}"
       - name: Commit puzzle to main
+        id: publish
         if: steps.clock.outputs.run == 'true'
         env:
           REQUESTED_DATE: ${{ inputs.date }}
@@ -61,8 +62,9 @@ jobs:
           git add "$path"
           git commit -m "data: import daily word puzzle $date"
           git push origin HEAD:main
+          echo "changed=true" >> "$GITHUB_OUTPUT"
       - name: Deploy updated daily puzzle
-        if: steps.clock.outputs.run == 'true'
+        if: steps.publish.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
