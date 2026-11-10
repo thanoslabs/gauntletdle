@@ -2,8 +2,9 @@ name: Import Daily Puzzles
 
 on:
   schedule:
-    # 00:01 America/New_York: UTC 04:01 in daylight time, 05:01 in standard time.
-    - cron: "1 4,5 * * *"
+    # 05:17 UTC is after midnight in New York in both EDT and EST.
+    # GitHub may delay scheduled runs; do not gate execution on the local hour.
+    - cron: "17 5 * * *"
   workflow_dispatch:
     inputs:
       date:
@@ -23,29 +24,18 @@ jobs:
   import:
     runs-on: ubuntu-latest
     steps:
-      - name: Check local time
+      - name: Resolve Eastern puzzle date
         id: clock
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-        run: |
-          echo "date=$(TZ=America/New_York date +%F)" >> "$GITHUB_OUTPUT"
-          if [[ "$EVENT_NAME" == "workflow_dispatch" || "$(TZ=America/New_York date +%H)" == "00" ]]; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "run=false" >> "$GITHUB_OUTPUT"
-          fi
+        run: echo "date=$(TZ=America/New_York date +%F)" >> "$GITHUB_OUTPUT"
       - name: Checkout
-        if: steps.clock.outputs.run == 'true'
         uses: actions/checkout@v4
       - name: Import puzzle
-        if: steps.clock.outputs.run == 'true'
         env:
           REQUESTED_DATE: ${{ inputs.date }}
           TODAY: ${{ steps.clock.outputs.date }}
         run: |
           python3 scripts/import_daily_word.py --date "${REQUESTED_DATE:-$TODAY}"
       - name: Import Krillion reveal
-        if: steps.clock.outputs.run == 'true'
         env:
           REQUESTED_DATE: ${{ inputs.date }}
           TODAY: ${{ steps.clock.outputs.date }}
@@ -53,7 +43,6 @@ jobs:
           python3 scripts/import_daily_krillion.py --date "${REQUESTED_DATE:-$TODAY}"
       - name: Commit puzzles to main
         id: publish
-        if: steps.clock.outputs.run == 'true'
         env:
           REQUESTED_DATE: ${{ inputs.date }}
           TODAY: ${{ steps.clock.outputs.date }}
