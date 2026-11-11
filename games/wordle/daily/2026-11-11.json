@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "gameId": "wordle",
+  "date": "2026-11-11",
+  "puzzleId": "nyt-wordle-1971",
+  "source": "external",
+  "puzzle": {
+    "answer": "BLESS",
+    "maxGuesses": 6
+  }
+}
