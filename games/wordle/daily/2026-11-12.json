@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "gameId": "wordle",
+  "date": "2026-11-12",
+  "puzzleId": "nyt-wordle-1972",
+  "source": "external",
+  "puzzle": {
+    "answer": "KARAT",
+    "maxGuesses": 6
+  }
+}
