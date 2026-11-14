@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "gameId": "wordle",
+  "date": "2026-11-14",
+  "puzzleId": "nyt-wordle-1974",
+  "source": "external",
+  "puzzle": {
+    "answer": "RANDY",
+    "maxGuesses": 6
+  }
+}
