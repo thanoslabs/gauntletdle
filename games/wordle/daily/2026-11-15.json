@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "gameId": "wordle",
+  "date": "2026-11-15",
+  "puzzleId": "nyt-wordle-1975",
+  "source": "external",
+  "puzzle": {
+    "answer": "SNARK",
+    "maxGuesses": 6
+  }
+}
