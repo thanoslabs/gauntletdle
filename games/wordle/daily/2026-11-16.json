@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "gameId": "wordle",
+  "date": "2026-11-16",
+  "puzzleId": "nyt-wordle-1976",
+  "source": "external",
+  "puzzle": {
+    "answer": "DRAWL",
+    "maxGuesses": 6
+  }
+}
