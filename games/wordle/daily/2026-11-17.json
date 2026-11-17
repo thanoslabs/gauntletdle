@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "gameId": "wordle",
+  "date": "2026-11-17",
+  "puzzleId": "nyt-wordle-1977",
+  "source": "external",
+  "puzzle": {
+    "answer": "ROAST",
+    "maxGuesses": 6
+  }
+}
