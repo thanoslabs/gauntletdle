@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "gameId": "wordle",
+  "date": "2026-11-19",
+  "puzzleId": "nyt-wordle-1979",
+  "source": "external",
+  "puzzle": {
+    "answer": "CLOUT",
+    "maxGuesses": 6
+  }
+}
