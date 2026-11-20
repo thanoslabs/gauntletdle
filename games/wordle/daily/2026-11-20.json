@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "gameId": "wordle",
+  "date": "2026-11-20",
+  "puzzleId": "nyt-wordle-1980",
+  "source": "external",
+  "puzzle": {
+    "answer": "AROSE",
+    "maxGuesses": 6
+  }
+}
