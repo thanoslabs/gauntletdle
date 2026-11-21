@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "gameId": "wordle",
+  "date": "2026-11-21",
+  "puzzleId": "nyt-wordle-1981",
+  "source": "external",
+  "puzzle": {
+    "answer": "STENT",
+    "maxGuesses": 6
+  }
+}
