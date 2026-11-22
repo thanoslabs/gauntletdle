@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "gameId": "wordle",
+  "date": "2026-11-22",
+  "puzzleId": "nyt-wordle-1982",
+  "source": "external",
+  "puzzle": {
+    "answer": "UPEND",
+    "maxGuesses": 6
+  }
+}
