@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "gameId": "wordle",
+  "date": "2026-11-23",
+  "puzzleId": "nyt-wordle-1983",
+  "source": "external",
+  "puzzle": {
+    "answer": "FILTH",
+    "maxGuesses": 6
+  }
+}
