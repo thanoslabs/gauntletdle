@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "gameId": "wordle",
+  "date": "2026-11-26",
+  "puzzleId": "nyt-wordle-1986",
+  "source": "external",
+  "puzzle": {
+    "answer": "TENSE",
+    "maxGuesses": 6
+  }
+}
